@@ -1,16 +1,17 @@
 import json
 import logging
 import os
-import time
-import requests
 import sys
-
-import telegram
+import time
 from http import HTTPStatus
-from dotenv import load_dotenv
 from logging.handlers import RotatingFileHandler
 
-from exceptions import Statu200Error, RequestAPIError, JSONDecorError, HWStatusError, ResponseError
+import requests
+import telegram
+from dotenv import load_dotenv
+
+from exceptions import (HWStatusError, JSONDecorError, RequestAPIError,
+                        ResponseError, Statu200Error)
 
 load_dotenv()
 
@@ -34,7 +35,11 @@ logging.basicConfig(
     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-handler = RotatingFileHandler('logger_for_hw.log', maxBytes=5000000, backupCount=5)
+handler = RotatingFileHandler(
+    'logger_for_hw.log',
+    maxBytes=5000000,
+    backupCount=5
+)
 logger.addHandler(handler)
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -43,7 +48,7 @@ handler.setFormatter(formatter)
 
 
 def check_tokens():
-    """Проверка доступность переменных окружения,"""
+    """Проверка доступность переменных окружения."""
     tokens = {
         'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
         'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
@@ -56,9 +61,9 @@ def check_tokens():
 
 
 def send_message(bot, message):
-    """Отправка собщения """
+    """Отправка собщения."""
     try:
-        message_info = f'Message ready to send: {message}'
+        message_info = f'Message ready to send: {message}.'
         logger.debug(message_info)
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.debug(f'Message sent: {message}')
@@ -67,8 +72,8 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    """Запрос к API и получение ответа"""
-    params = {'from_date': timestamp}
+    """Запрос к API и получение ответа."""
+    params = {'from_date': timestamp, }
     try:
         homework_status = requests.get(
             url=ENDPOINT,
@@ -86,7 +91,7 @@ def get_api_answer(timestamp):
 
 
 def check_response(response):
-    """Проверка полученных данных"""
+    """Проверка полученных данных."""
     if not isinstance(response, dict):
         raise TypeError('Incorrect type data')
     elif 'homeworks' not in response:
@@ -97,7 +102,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Извлекает информацию о конкретной домашней работе"""
+    """Извлекает информацию о конкретной домашней работе."""
     homework_name = homework.get('homework_name')
     hw_status = homework.get('status')
     if hw_status is None:
