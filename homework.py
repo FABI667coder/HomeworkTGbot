@@ -75,15 +75,15 @@ def get_api_answer(timestamp):
     """Запрос к API и получение ответа."""
     params = {'from_date': timestamp, }
     try:
-        homework_status = requests.get(
+        homework = requests.get(
             url=ENDPOINT,
             headers=HEADERS,
             params=params,
         )
-        request_status = homework_status.status_code
+        request_status = homework.status_code
         if request_status != HTTPStatus.OK:
             raise Statu200Error(f'{ENDPOINT} not available')
-        return homework_status.json()
+        return homework.json()
     except requests.exceptions.RequestException as api_error:
         raise RequestAPIError(f'Bad request {api_error}')
     except json.JSONDecodeError as json_error:
@@ -103,8 +103,8 @@ def check_response(response):
 
 def parse_status(homework):
     """Извлекает информацию о конкретной домашней работе."""
-    homework_name = homework.get('homework_name')
-    hw_status = homework.get('status')
+    homework_name = homework.get("homework_name")
+    hw_status = homework.get("status")
     if hw_status is None:
         raise HWStatusError('Status is empty')
     if hw_status not in HOMEWORK_VERDICTS:
@@ -126,13 +126,14 @@ def main():
     while True:
         try:
             response = get_api_answer(timestamp)
-            timestamp = response.get('current_data')
+            timestamp = response.get("current_date")
             homework = check_response(response)
             if homework:
                 current_hw = homework[0]
-                lesson_name = current_hw['lesson_name']
+                lesson_name = current_hw["lesson_name"]
                 hw_status = parse_status(current_hw)
-                send_message(bot, f'{lesson_name} \n {hw_status}')
+                message = f'{lesson_name} \n {hw_status}'
+                send_message(bot, message)
             else:
                 logger.debug('There is no new status')
         except Exception as error:
