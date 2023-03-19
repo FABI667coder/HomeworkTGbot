@@ -1,23 +1,18 @@
 class Statu200Error(Exception):
-    def __init__(self, text):
-        self.text = text
+    pass
 
 
 class RequestAPIError(Exception):
-    def __init__(self, text):
-        self.text = text
+    pass
 
 
 class JSONDecorError(Exception):
-    def __init__(self, text):
-        self.text = text
+    pass
 
 
 class HWStatusError(Exception):
-    def __init__(self, text):
-        self.text = text
+    pass
 
 
 class ResponseError(Exception):
-    def __init__(self, text):
-        self.text = text
+    pass

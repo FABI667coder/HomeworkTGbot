@@ -29,22 +29,23 @@ HOMEWORK_VERDICTS = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filename='program.log',
-    level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-handler = RotatingFileHandler(
+handler_for_file = RotatingFileHandler(
     'logger_for_hw.log',
     maxBytes=5000000,
     backupCount=5
 )
-logger.addHandler(handler)
+handler_for_stream = logging.StreamHandler(
+    stream=sys.stdout
+)
+logger.addHandler(handler_for_file)
+logger.addHandler(handler_for_stream)
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-handler.setFormatter(formatter)
+handler_for_file.setFormatter(formatter)
+handler_for_stream.setFormatter(formatter)
 
 
 def check_tokens():
@@ -55,7 +56,7 @@ def check_tokens():
         'TELEGRAM_CHAT_ID': TELEGRAM_CHAT_ID,
     }
     for key, value in tokens.items():
-        if value is None:
+        if not value:
             logger.critical(f'{key} not found')
             sys.exit(1)
 
@@ -80,8 +81,7 @@ def get_api_answer(timestamp):
             headers=HEADERS,
             params=params,
         )
-        request_status = homework.status_code
-        if request_status != HTTPStatus.OK:
+        if homework.status_code != HTTPStatus.OK:
             raise Statu200Error(f'{ENDPOINT} not available')
         return homework.json()
     except requests.exceptions.RequestException as api_error:
@@ -93,24 +93,26 @@ def get_api_answer(timestamp):
 def check_response(response):
     """Проверка полученных данных."""
     if not isinstance(response, dict):
-        raise TypeError('Incorrect type data')
+        raise TypeError('Incorrect type data. Data not "dict"')
     elif 'homeworks' not in response:
         raise ResponseError('Key "homeworks" does not exist')
+    elif 'current_date' not in response:
+        raise ResponseError('Key "current_date" does not exist')
     elif not isinstance(response['homeworks'], list):
-        raise TypeError('Incorrect type data')
+        raise TypeError('Incorrect type data. Data not "list"')
     return response.get('homeworks')
 
 
 def parse_status(homework):
     """Извлекает информацию о конкретной домашней работе."""
-    homework_name = homework.get("homework_name")
-    hw_status = homework.get("status")
+    homework_name = homework.get('homework_name')
+    hw_status = homework.get('status')
     if hw_status is None:
-        raise HWStatusError('Status is empty')
+        raise KeyError('Key does not exist')
+    if homework_name is None:
+        raise KeyError('Key does not exist')
     if hw_status not in HOMEWORK_VERDICTS:
         raise HWStatusError('Incorrect status')
-    if homework_name is None:
-        raise HWStatusError('Name is empty')
     verdict = HOMEWORK_VERDICTS[hw_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
@@ -126,24 +128,29 @@ def main():
     while True:
         try:
             response = get_api_answer(timestamp)
-            timestamp = response.get("current_date")
             homework = check_response(response)
             if homework:
                 current_hw = homework[0]
-                lesson_name = current_hw["lesson_name"]
+                lesson_name = current_hw['lesson_name']
                 hw_status = parse_status(current_hw)
-                message = f'{lesson_name} \n {hw_status}'
-                send_message(bot, message)
+                send_message(bot, f'{lesson_name} \n {hw_status}')
+                timestamp = response.get('current_date')
             else:
                 logger.debug('There is no new status')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            logger.error(message)
+            logger.exception(message)
             if message != last_error:
-                send_message(bot, HOMEWORK_VERDICTS)
+                send_message(bot, message)
+                last_error = message
         finally:
             time.sleep(RETRY_PERIOD)
 
 
 if __name__ == '__main__':
     main()
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        filename='program.log',
+        level=logging.DEBUG,
+    )
