@@ -107,6 +107,7 @@ def parse_status(homework):
     """Извлекает информацию о конкретной домашней работе."""
     homework_name = homework.get('homework_name')
     hw_status = homework.get('status')
+    lesson_name = homework.get('lesson_name')
     if hw_status is None:
         raise KeyError('Key does not exist')
     if homework_name is None:
@@ -114,7 +115,8 @@ def parse_status(homework):
     if hw_status not in HOMEWORK_VERDICTS:
         raise HWStatusError('Incorrect status')
     verdict = HOMEWORK_VERDICTS[hw_status]
-    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
+    return (f'Изменился статус проверки работы "{homework_name}". '
+            f'\n {lesson_name} \n {verdict}')
 
 
 def main():
@@ -123,6 +125,7 @@ def main():
     check_tokens()
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
+    timestamp = 0
     send_message(bot, 'Bot is active')
     last_error = ''
     while True:
