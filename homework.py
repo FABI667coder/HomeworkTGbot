@@ -125,7 +125,6 @@ def main():
     check_tokens()
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
-    timestamp = 0
     send_message(bot, 'Bot is active')
     last_error = ''
     while True:
