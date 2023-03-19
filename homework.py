@@ -131,9 +131,8 @@ def main():
             homework = check_response(response)
             if homework:
                 current_hw = homework[0]
-                lesson_name = current_hw['lesson_name']
                 hw_status = parse_status(current_hw)
-                send_message(bot, f'{lesson_name} \n {hw_status}')
+                send_message(bot, hw_status)
                 timestamp = response.get('current_date')
             else:
                 logger.debug('There is no new status')
