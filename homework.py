@@ -68,8 +68,10 @@ def send_message(bot, message):
         logger.debug(message_info)
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.debug(f'Message sent: {message}')
+        return True
     except telegram.TelegramError as error:
         logger.error(f' Message not send {error}')
+        return False
 
 
 def get_api_answer(timestamp):
@@ -93,13 +95,19 @@ def get_api_answer(timestamp):
 def check_response(response):
     """Проверка полученных данных."""
     if not isinstance(response, dict):
-        raise TypeError('Incorrect type data. Data not "dict"')
+        raise TypeError(
+            f'Incorrect type data. '
+            f'Your type: {type(response)} not "dict"'
+            )
     elif 'homeworks' not in response:
         raise ResponseError('Key "homeworks" does not exist')
     elif 'current_date' not in response:
         raise ResponseError('Key "current_date" does not exist')
     elif not isinstance(response['homeworks'], list):
-        raise TypeError('Incorrect type data. Data not "list"')
+        raise TypeError(
+            f'Incorrect type data. '
+            f'Your type: {type(response)} not "list"'
+        )
     return response.get('homeworks')
 
 
@@ -134,16 +142,16 @@ def main():
             if homework:
                 current_hw = homework[0]
                 hw_status = parse_status(current_hw)
-                send_message(bot, hw_status)
-                timestamp = response.get('current_date')
+                if send_message(bot, hw_status):
+                    timestamp = response.get('current_date')
             else:
                 logger.debug('There is no new status')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.exception(message)
             if message != last_error:
-                send_message(bot, message)
-                last_error = message
+                if send_message(bot, message):
+                    last_error = message
         finally:
             time.sleep(RETRY_PERIOD)
 
@@ -155,3 +163,4 @@ if __name__ == '__main__':
         filename='program.log',
         level=logging.DEBUG,
     )
+
