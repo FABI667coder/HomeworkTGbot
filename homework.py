@@ -98,7 +98,7 @@ def check_response(response):
         raise TypeError(
             f'Incorrect type data. '
             f'Your type: {type(response)} not "dict"'
-            )
+        )
     elif 'homeworks' not in response:
         raise ResponseError('Key "homeworks" does not exist')
     elif 'current_date' not in response:
@@ -163,4 +163,3 @@ if __name__ == '__main__':
         filename='program.log',
         level=logging.DEBUG,
     )
-
